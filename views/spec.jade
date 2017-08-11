@@ -1,0 +1,164 @@
+extends layout
+
+block pageCSS
+  link(href='/plugins/bootstrap-wizard/css/bwizard.min.css', rel='stylesheet')
+
+block content
+  ol.breadcrumb.pull-right
+    li
+      a(href= host) 首頁
+    li.active
+      a(href='javascript:;') 開發文件
+  h1.page-header
+    | BioServer
+    small 開發文件
+  .row
+    .col-md-12
+      .panel.panel-inverse(data-sortable-id='table-basic-1')
+        .panel-heading
+          h4.panel-title 開發文件
+        .panel-body
+          h2
+            a#Fingerprint_Basic_API_Server_0
+            | Fingerprint Basic API Server
+          h3
+            a#Install_2
+            | Install
+          ol
+            li
+              | MongoDB:
+              ul
+                li
+                  | Windows: Download MongoDB
+                  a(href='http://portableapps.com/node/53739') http://portableapps.com/node/53739
+                  |  and Extract , Run the
+                  code MongoDBPortable.exe
+                  |  to initialize database server on Windows.
+                li
+                  | Windows and Other Operation Systems: Follow the instructions on
+                  a(href='https://docs.mongodb.com/manual/installation/') https://docs.mongodb.com/manual/installation/
+                  |  to install your own MongoDB Database.
+            li
+              | (Optional) Follow the instructions on
+              a(href='https://github.com/nodejs/node-gyp') https://github.com/nodejs/node-gyp
+              |  to install python and C/C++ compiler,
+              code node-gyp
+              |  is necessarily linking and calling the SDK functions
+            li
+              | (Optional) For production, please set node.js to production mode by
+              code SET NODE_ENV=production
+            li
+              code npm install
+              |  in the root directory of this repository.
+            li
+              code npm start
+              |  and server will run on
+              code http://localhost:3000
+          h3
+            a#Usage_12
+            | Usage
+          ol
+            li
+              | Settings:
+              code settings.js
+              |  in
+              code config
+              |  direcotry, there are six parameters for developer to set as the following,
+              ul
+                li
+                  code DBCONNECTION
+                  | : DB Connection Link
+                li
+                  code SETTINGSPOSITION
+                  | : Settings.js System Path
+                li
+                  code SPEEDFLAG
+                  | : Speed Flag for Fingerprint Search, Identify and Verify
+                li
+                  code SECURITY
+                  | : Security Level for Fingerprint Search, Identify and Verify. 1 to 5, the higher the looser.
+                li
+                  code ROTATIONTH
+                  | : Maximum Rotation Degree for Fingerprint Search, Identify and Verify. 60 degrees maximum.
+                li
+                  code MAXRESULT
+                  | : Maximum Result that Fingerprint Search Function Returns
+            li
+              | Code Format:
+              ul
+                li
+                  code 200
+                  | : Success
+                li
+                  code 403
+                  | : No Matches
+                li
+                  code 404
+                  | : No Such a User / No Matched Records
+                li
+                  code 406
+                  | : Required Columns Not Fulfilled / Minutiae Code Length Not Satisfied
+                li
+                  code 501
+                  | : Input or Server Error
+            li
+              | Result Format:
+              code {code, message, data}
+              |  the
+              code data
+              |  column is optional
+            li
+              | Add Minutiae
+              ul
+                li
+                  | Route:
+                  code POST /api/addFP
+                li
+                  | Columns:
+                  code userId, fpIndex, minutiae (Length: 1024, ie. 512 bytes)
+            li
+              | Delete Minutiae
+              ul
+                li
+                  | Route:
+                  code POST /api/deleteFP
+                li
+                  | Columns:
+                  code userId, fpIndex
+            li
+              | Search Minutiae
+              ul
+                li
+                  | Route:
+                  code POST /api/searchFP
+                li
+                  | Columns:
+                  code minutiae
+            li
+              | Verify User
+              ul
+                li
+                  | Route:
+                  code POST /api/verifyFP
+                li
+                  | Columns:
+                  code userId, minutiae (Length: 1024, ie. 512 bytes)
+            li
+              | Identify User
+              ul
+                li
+                  | Route:
+                  code POST /api/identifyFP
+                li
+                  | Column:
+                  code minutiae (Length: 1024, ie. 512 bytes)
+
+
+block pageJS
+  script(src='/js/apps.min.js')
+
+block onPageJS
+  script.
+    $(document).ready(function() {
+      App.init();
+    });

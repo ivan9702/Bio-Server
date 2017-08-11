@@ -1,0 +1,75 @@
+extends layout
+
+block pageCSS
+  link(href='/plugins/bootstrap-wizard/css/bwizard.min.css', rel='stylesheet')
+
+block content
+  ol.breadcrumb.pull-right
+    li
+      a(href= host) 首頁
+    li
+      a(href='javascript:;') 運行紀錄查詢
+    li.active
+      a(href='javascript:;') Function Call
+  h1.page-header
+    | BioServer
+    small Function Call
+  .p-20
+    .row
+      .col-md-12
+        .email-content
+          table.table.table-email
+            thead
+              tr
+                th
+                  | 接收
+                  br
+                  | Request
+                th Use Function
+                th
+                  | 指紋數
+                  br
+                  | 記憶體
+                th 待比對
+                th 已比對
+                th 比對結果
+                th 費時
+                th
+                  | 狀態
+                  .dropdown
+                    a.email-header-link(href='#', data-toggle='dropdown')
+                      | ALL
+                      i.fa.fa-angle-down.m-l-5
+                    ul.dropdown-menu
+                      li.active
+                        a(href='#') ALL
+                      li
+                        a(href='#') 正常
+                      li
+                        a(href='#') 異常
+              tr
+                td
+                  a.email-header-link(href='Link RESTFul') Request
+                td
+                td
+                td
+                td
+                td
+                td
+                td
+                td
+            tbody
+          .email-footer.clearfix
+            | 往下捲時自動載入
+
+
+block pageJS
+  script(src='/js/inbox.demo.min.js')
+  script(src='/js/apps.min.js')
+
+block onPageJS
+  script.
+    $(document).ready(function() {
+      App.init();
+      Inbox.init();
+    });

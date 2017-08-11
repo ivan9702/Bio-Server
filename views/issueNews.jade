@@ -1,0 +1,75 @@
+extends layout
+
+block pageCSS
+  link(href='/plugins/bootstrap-wizard/css/bwizard.min.css', rel='stylesheet')
+
+block content
+  ol.breadcrumb.pull-right
+    li
+      a(href= host) 首頁
+    li.active
+      a(href='javascript:;') 最新訊息
+  h1.page-header
+    | BioServer
+    small 最新訊息
+  .vertical-box
+    div(class='vertical-box-column', ng-app='listApp', ng-controller='listController')
+      ul(class='list-group list-group-lg no-radius list-email', infinite-scroll='github.nextPage()', infinite-scroll-disabled='github.busy', infinite-scroll-distance='1')
+        li(class='list-group-item inverse', ng-repeat='item in github.items', infinite-scroll-distance='2')
+          .email-checkbox
+            label
+              i.fa.fa-square-o
+              input(type='checkbox', data-checked='email-checkbox')
+          a.email-user(ng-href='item.user.html_url')
+            img(ng-src='{{item.user.avatar_url}}', alt='')
+          .email-info
+            span(class='email-time', ng-bind='item.created_at | timeAgo', ng-attr-title='{{item.created_at}}')
+            h5.email-title
+              a(ng-href='item.html_url', ng-bind='item.title')
+              span(class='label label-inverse f-s-10', ng-bind='item.user.login').
+            p(class='email-desc', ng-bind='(item.body | limitTo:150) + \'...\'')
+
+block pageJS
+  script(src='//ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js')
+  script(src='/js/ng-infinite-scroll.min.js')
+  script(src='/js/angular-timeago.min.js')
+  script(src='/js/time-ago-language-zh_TW.js')
+  script(src='/js/email-inbox-v2.demo.min.js')
+  script(src='/js/apps.min.js')
+
+block onPageJS
+  script.
+    $(document).ready(function() {
+      App.init();
+      InboxV2.init();
+    });
+    var listApp = angular.module('listApp', ['infinite-scroll', 'yaru22.angular-timeago']);
+    listApp.controller('listController', function($scope, Github) {
+      $scope.github = new Github();
+    });
+    listApp.factory('Github', function($http, $sce) {
+      var Github = function() {
+        this.items = [];
+        this.busy = false;
+        this.after = 1;
+      };
+
+      Github.prototype.nextPage = function() {
+        if (this.busy) return;
+        this.busy = true;
+        var url = "https://api.github.com/repos/meteor/meteor/issues?page=" + this.after;
+        $sce.trustAsResourceUrl(url);
+        $http.get(url).success(function(data) {
+          for (var i = 0; i < data.length; i++) {
+            this.items.push(data[i]);
+          }
+          this.after++;
+          this.busy = false;
+        }.bind(this));
+      };
+
+      return Github;
+    });
+    listApp.config(function (timeAgoSettings) {
+      timeAgoSettings.overrideLang = 'zh_TW';
+    });

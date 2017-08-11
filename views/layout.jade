@@ -1,0 +1,125 @@
+doctype html
+//if IE 8
+  html.ie8(lang='en')
+// [if !IE] <!
+html(lang='en')
+  // <![endif]
+  head
+    meta(charset='utf-8')
+    title= 'BioServer：' + title
+    meta(content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no', name='viewport')
+    meta(content='', name='description')
+    meta(content='', name='author')
+    link(href='http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700', rel='stylesheet')
+    link(href='/plugins/jquery-ui/themes/base/minified/jquery-ui.min.css', rel='stylesheet')
+    link(href='/plugins/bootstrap/css/bootstrap.min.css', rel='stylesheet')
+    link(href='/plugins/font-awesome/css/font-awesome.min.css', rel='stylesheet')
+    link(href='/css/animate.min.css', rel='stylesheet')
+    link(href='/css/style.min.css', rel='stylesheet')
+    link(href='/css/style-responsive.min.css', rel='stylesheet')
+    link#theme(href='/css/theme/default.css', rel='stylesheet')
+    block pageCSS
+    script(src='/plugins/pace/pace.min.js')
+  body
+    #page-loader.fade.in
+      span.spinner
+    #page-container.fade.page-sidebar-fixed.page-header-fixed
+      #header.header.navbar.navbar-default.navbar-fixed-top
+        .container-fluid
+          .navbar-header
+            a.navbar-brand(href='/')
+              span.navbar-logo
+              |  STARTEK
+          ul.nav.navbar-nav.navbar-right
+            li.dropdown.navbar-user
+              a.dropdown-toggle(href='javascript:;', data-toggle='dropdown')
+                img(src='/img/logo.png', alt='')
+                span.hidden-xs About
+                b.caret
+              ul.dropdown-menu.animated.fadeInLeft
+                li
+                  a(href='http://www.startek.com.tw/')
+                    span.badge.badge-danger.pull-right n
+                    | startek website
+                li
+                  a(href='javascript:;') Link to info.json
+      #sidebar.sidebar
+        div(data-scrollbar='true', data-height='100%')
+          ul.nav
+            li.nav-header BioServer
+            li(class="#{current === 0 ? 'active' : ''}")
+              a(href='/')
+                i.fa.fa-file-code-o
+                span 主機現況
+            li(class="#{current === 1 ? 'has-sub active' : 'has-sub'}")
+              a(href='javascript:;')
+                b.caret.pull-right
+                i.fa.fa-play
+                span 用戶端操作展示
+              ul.sub-menu
+                li(class="#{currentSub === 1 ? 'active' : ''}")
+                  a(href='/demo/enroll') 指紋建檔 (Add Minutiae)
+                li(class="#{currentSub === 2 ? 'active' : ''}")
+                  a(href='/demo/delete') 刪除使用者 (Delete User)
+                li(class="#{currentSub === 3 ? 'active' : ''}")
+                  a(href='/demo/search') 搜尋使用者 (Search User)
+                li(class="#{currentSub === 4 ? 'active' : ''}")
+                  a(href='/demo/verify') 指紋驗證 (Verify User)
+                li(class="#{currentSub === 5 ? 'active' : ''}")
+                  a(href='/demo/identify') 指紋識別 (Identify User)
+            li(class="#{current === 2 ? 'active' : ''}")
+              a(href='/spec')
+                i.fa.fa-file-code-o
+                span 開發文件
+            li(class="#{current === 3 ? 'active' : ''}")
+              a(href='/news')
+                i.fa.fa-newspaper-o
+                span 最新訊息
+            li(class="#{current === 4 ? 'has-sub active' : 'has-sub'}")
+              a(href='javascript:;')
+                b.caret.pull-right
+                i.fa.fa-flask
+                span 功能測試
+              ul.sub-menu
+                li(class="#{currentSub === 6 ? 'active' : ''}")
+                  a(href='/function/enroll') 指紋建檔 (Add Minutiae)
+                li(class="#{currentSub === 7 ? 'active' : ''}")
+                  a(href='/function/delete') 刪除使用者 (Delete User)
+                li(class="#{currentSub === 8 ? 'active' : ''}")
+                  a(href='/function/search') 搜尋使用者 (Search User)
+                li(class="#{currentSub === 9 ? 'active' : ''}")
+                  a(href='/function/verify') 指紋驗證 (Verify User)
+                li(class="#{currentSub === 10 ? 'active' : ''}")
+                  a(href='/function/identify') 指紋識別 (Identify User)
+            li(class="#{current === 5 ? 'active' : ''}")
+              a(href='/log/restful-api')
+                i.fa.fa-archive
+                span 運行紀錄查詢
+            li(class="#{current === 6 ? 'active' : ''}")
+              a(href='/monthly-report')
+                i.fa.fa-print
+                span 運行統計
+            li(class="#{current === 7 ? 'active' : ''}")
+              a(href='/error-analytics')
+                i.fa.fa-desktop
+                span 異常分析
+            li(class="#{current === 8 ? 'active' : ''}")
+              a.sidebar-minify-btn(href='javascript:;', data-click='sidebar-minify')
+                i.fa.fa-angle-double-left
+      .sidebar-bg
+      #content.content
+        block content
+      a.btn.btn-icon.btn-circle.btn-success.btn-scroll-to-top.fade(href='javascript:;', data-click='scroll-top')
+        i.fa.fa-angle-up
+    script(src='/plugins/jquery/jquery-1.9.1.min.js')
+    script(src='/plugins/jquery/jquery-migrate-1.1.0.min.js')
+    script(src='/plugins/jquery-ui/ui/minified/jquery-ui.min.js')
+    script(src='/plugins/bootstrap/js/bootstrap.min.js')
+    //if lt IE 9
+      script(src='/crossbrowserjs/html5shiv.js')
+      script(src='/crossbrowserjs/respond.min.js')
+      script(src='/crossbrowserjs/excanvas.min.js')
+    script(src='/plugins/slimscroll/jquery.slimscroll.min.js')
+    script(src='/plugins/jquery-cookie/jquery.cookie.js')
+    block pageJS
+    block onPageJS

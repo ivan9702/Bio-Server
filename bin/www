@@ -1,0 +1,390 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var app = require('../app');
+var debug = require('debug')('node-api:server');
+var http = require('http');
+var ffi = require('ffi');
+var ref = require('ref');
+var mongoose = require('mongoose');
+var FP = mongoose.model('userFingerPrint');
+var log = mongoose.model('logs');
+var flog = mongoose.model('flogs');
+var os = require('os');
+var osName = require('os-name');
+var fs = require('fs');
+
+SERVEROS = osName() + ' (' + os.platform() + ', ver: ' + os.release() + ')';
+//console.log(SERVEROS);
+
+Date.prototype.yyyymmdd = function() {
+  var yyyy = this.getFullYear().toString();
+  var mm = (this.getMonth()+1).toString(); // getMonth() is zero-based
+  var dd  = this.getDate().toString();
+
+  return yyyy + '-' + (mm[1]?mm:"0"+mm[0]) + '-' + (dd[1]?dd:"0"+dd[0]);
+};
+
+Date.prototype.yyyymm = function() {
+  var yyyy = this.getFullYear().toString();
+  var mm = (this.getMonth()+1).toString(); // getMonth() is zero-based
+  //var dd  = this.getDate().toString();
+
+  return yyyy + '-' + (mm[1]?mm:"0"+mm[0]);
+};
+
+numberWithCommas = function(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+};
+
+var get7days = function(today){
+  var sevenDays = [];
+  for(var i = 0; i < 7; i++){
+    var dateToPush = new Date(today);
+    dateToPush.setDate(today.getDate() - i);
+    dateToPush = dateToPush.yyyymmdd();
+    sevenDays.push(dateToPush);
+  }
+  return sevenDays;
+};
+
+var osType = os.type();
+var osArch = os.arch();
+
+if(osType == "Windows_NT" && osArch == "ia32"){
+  sdkBasePath = __dirname + "\\sdk\\windows\\";
+  DLLPOSITION = sdkBasePath + "STARTEKBioServer.dll";
+  fs.stat(DLLPOSITION, function(err, stats){
+    DLLLASTDATETIME = stats.mtime;
+  });
+  dllFingerPrinterDll = ffi.Library(sdkBasePath + "FingerPrinterDll", {});
+  dllnbisDll = ffi.Library(sdkBasePath + "nbisDll", {});
+  dllWSAServerDrv = ffi.Library(sdkBasePath + "WSAServerDrv", {});
+  dllWSAServerAPI = ffi.Library(sdkBasePath + "WSAServerAPI", {});
+  dllBioServer = ffi.Library(sdkBasePath + "STARTEKBioServer", {
+    "BioServer_Init_Mem": ['int', []],
+    "BioServer_DeInit_v1": ['int', []],
+    "BioServer_AddFP": ['int', ['ulong', 'int', 'pointer', 'int', 'pointer', 'int', 'int']],
+    "BioServer_DeleteFP": ['int', ['int', 'int']],
+    "BioServer_FPSearchEx": ['int', ['pointer', 'int', 'pointer', 'int', 'int', 'int', 'int', 'int', 'pointer', 'pointer', 'pointer', 'pointer']],
+    "BioServer_Identify": ['int', ['pointer', 'int', 'pointer', 'int', 'int', 'int', 'int', 'pointer', 'pointer', 'pointer']],
+    "BioServer_Verify": ['int', ['int', 'pointer', 'int', 'pointer', 'int', 'int', 'int', 'int', 'pointer', 'pointer']]
+  });
+}
+else if(osType == "Linux" && osArch == "x64"){
+  sdkBasePath = __dirname + "/sdk/linux64/";
+  DLLPOSITION = sdkBasePath + "fm220sdk.so";
+  fs.stat(DLLPOSITION, function(err, stats){
+    DLLLASTDATETIME = stats.mtime;
+  });
+  // dlllibUSB = ffi.Library(sdkBasePath + "libusb-1.0", {});
+  dllBioServer = ffi.Library(sdkBasePath + "fm220sdk", {
+    "BioServer_Init_Mem": ['int', []],
+    "BioServer_DeInit_v1": ['int', []],
+    "BioServer_AddFP": ['int', ['ulong', 'int', 'pointer', 'int', 'pointer', 'int', 'int']],
+    "BioServer_DeleteFP": ['int', ['int', 'int']],
+    // "BioServer_FPSearchEx": ['int', ['pointer', 'int', 'pointer', 'int', 'int', 'int', 'int', 'int', 'pointer', 'pointer', 'pointer', 'pointer']],
+    "BioServer_Identify": ['int', ['pointer', 'int', 'pointer', 'int', 'int', 'int', 'int', 'pointer', 'pointer', 'pointer']],
+    "BioServer_Verify": ['int', ['int', 'pointer', 'int', 'pointer', 'int', 'int', 'int', 'int', 'pointer', 'pointer']]
+    // "BioServer_Usage": ['int', ['ulong','ulong']],
+  });
+}
+
+
+
+BioserverData = {
+  today: '',
+  totalAPICallAmount: 0,
+  todayAPICallAmount: 0,
+  todayAPICallTime: 0,
+  recentAPICallTime: 0,
+  totalFPAmount: 0,
+  databaseLink: DBCONNECTION,
+  totalErrCallAmount: 0,
+  todayErrCallAmount: 0,
+  totalIdentifyAmount: 0,
+  totalVerifyAmount: 0,
+  totalAddAmount: 0,
+  totalDeleteAmount: 0,
+  totalSearchAmount: 0,
+  today200Amount: 0,
+  today403Amount: 0,
+  today404Amount: 0,
+  today406Amount: 0,
+  today501Amount: 0,
+  allMonths: [],
+  sevenDays: [],
+  sevenDayAdd: [0,0,0,0,0,0,0],
+  sevenDayDelete: [0,0,0,0,0,0,0],
+  sevenDaySearch: [0,0,0,0,0,0,0],
+  sevenDayVerify: [0,0,0,0,0,0,0],
+  sevenDayIdentify: [0,0,0,0,0,0,0],
+  sevenDayError: [0,0,0,0,0,0,0],
+  sevenDaySum: 0,
+  linuxDistro: ''
+};
+
+updateStatistics = function(){
+  /*var linuxDistro = require('linux-distro');
+  linuxDistro().then(data=>{
+    BioserverData.linuxDistro = data.name;
+  });*/
+  /*log.remove({}, function(err){
+    if(err)
+      console.log(err);
+  });*/
+  var todayDate = new Date();
+  todayDate.setHours(0,0,0,0);
+
+  var currentDate = todayDate.yyyymmdd();
+  var currentMonth = todayDate.yyyymm();
+  BioserverData.today = currentDate;
+  BioserverData.sevenDays = get7days(todayDate);
+  BioserverData.allMonths[0] = currentMonth;
+
+
+  log.find({}, null, {sort: {eventTime: -1}}, function(err, apiLogs){
+    var initialPosition = 0;
+    apiLogs.forEach(function(apiLog){
+      BioserverData.totalAPICallAmount++;
+      if(apiLog.resBody.code > 400)
+        BioserverData.totalErrCallAmount++;
+      if(apiLog.eventTime.yyyymm() != currentMonth){
+        currentMonth = apiLog.eventTime.yyyymm();
+        BioserverData.allMonths.push(currentMonth);
+      }
+      if(apiLog.eventTime > todayDate){
+        //console.log(apiLog.eventTime.toString());
+        BioserverData.todayAPICallAmount++;
+        BioserverData.sevenDaySum++;
+        BioserverData.todayAPICallTime += apiLog.resBody.resTime;
+        //console.log(BioserverData.todayAPICallTime);
+        //console.log(apiLog);
+        if(BioserverData.recentAPICallTime === 0){
+          BioserverData.recentAPICallTime = apiLog.resBody.resTime;
+          //console.log(apiLog);
+        }
+        switch(apiLog.resBody.code){
+          case 200:
+            BioserverData.today200Amount++;
+            break;
+          case 403:
+            BioserverData.today403Amount++;
+            BioserverData.todayErrCallAmount++;
+            BioserverData.sevenDayError[initialPosition]++;
+            break;
+          case 404:
+            BioserverData.today404Amount++;
+            BioserverData.todayErrCallAmount++;
+            BioserverData.sevenDayError[initialPosition]++;
+            break;
+          case 406:
+            BioserverData.today406Amount++;
+            BioserverData.todayErrCallAmount++;
+            BioserverData.sevenDayError[initialPosition]++;
+            break;
+          case 501:
+            BioserverData.today501Amount++;
+            BioserverData.todayErrCallAmount++;
+            BioserverData.sevenDayError[initialPosition]++;
+            break;
+        }
+        switch(apiLog.reqPath){
+          case "/addFP":
+            BioserverData.sevenDayAdd[initialPosition]++;
+            BioserverData.totalAddAmount++;
+            break;
+          case "/deleteFP":
+            BioserverData.sevenDayDelete[initialPosition]++;
+            BioserverData.totalDeleteAmount++;
+            break;
+          case "/searchFP":
+            BioserverData.sevenDaySearch[initialPosition]++;
+            BioserverData.totalSearchAmount++;
+            break;
+          case "/verifyFP":
+            BioserverData.sevenDayVerify[initialPosition]++;
+            BioserverData.totalVerifyAmount++;
+            break;
+          case "/identifyFP":
+            BioserverData.sevenDayIdentify[initialPosition]++;
+            BioserverData.totalIdentifyAmount++;
+            break;
+        }
+      }
+      else{
+        if(apiLog.eventTime.yyyymmdd() != currentDate){
+          initialPosition++;
+          currentData = apiLog.eventTime.yyyymmdd();
+        }
+        switch(apiLog.reqPath){
+          case "/verifyFP":
+            BioserverData.totalVerifyAmount++;
+            break;
+          case "/identifyFP":
+            BioserverData.totalIdentifyAmount++;
+            break;
+          case "/addFP":
+            BioserverData.totalAddAmount++;
+            break;
+          case "/deleteFP":
+            BioserverData.totalDeleteAmount++;
+            break;
+          case "/searchFP":
+            BioserverData.totalSearchAmount++;
+            break;
+        }
+        if(initialPosition < 7){
+          BioserverData.sevenDaySum++;
+          if(BioserverData.recentAPICallTime === 0)
+            BioserverData.recentAPICallTime = apiLog.resBody.resTime;
+          if(apiLog.resBody.code > 400){
+            BioserverData.sevenDayError[initialPosition]++;
+          }
+          switch(apiLog.reqPath){
+            case "/addFP":
+              BioserverData.sevenDayAdd[initialPosition]++;
+              break;
+            case "/deleteFP":
+              BioserverData.sevenDayDelete[initialPosition]++;
+              break;
+            case "/searchFP":
+              BioserverData.sevenDaySearch[initialPosition]++;
+              break;
+            case "/verifyFP":
+              BioserverData.sevenDayVerify[initialPosition]++;
+              break;
+            case "/identifyFP":
+              BioserverData.sevenDayIdentify[initialPosition]++;
+              break;
+          }
+        }
+      }
+    });
+    //console.log(BioserverData);
+  });
+};
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || '3000');
+app.set('port', port);
+
+/**
+ * Create HTTP server.
+ */
+
+var server = http.createServer(app);
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+server.on('close', onClosing);
+
+serverAddress = server.address();
+app.locals.host = serverAddress.address == '::' ? 'http://localhost:' + serverAddress.port : 'http://' + serverAddress.address + ':' + serverAddress.port;
+//console.log(SERVERADDRESS);
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  //dllBioServer.BioServer_DeInit_v1();
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+  var licenseNum = dllBioServer.BioServer_Init_Mem();
+
+  //console.log(licenseNum);
+  if(licenseNum >= 0){
+    //var loadedFPNum = 1;
+    FP.find({}, function(err, userFPs){
+      var beginTime = process.hrtime();
+      userFPs.forEach(function(user){
+      // userFPs.forEach(function(user, index){
+        // if (index > 3000){return;}
+        var userFP = new Buffer(user.minutiae, 'hex');
+        var FPIdxProcess = dllBioServer.BioServer_AddFP(user.userId, user.fpIndex, userFP, 512, null, 0, 0);
+        // var FPIdxUsage = dllBioServer.BioServer_Usage(0, 0);
+        // console.log(FPIdxUsage);
+        if(FPIdxProcess < 0)
+          console.log({status: 'error', userId: user.userId, fpIndex: user.fpIndex, minutiae: user.minutiae});
+        if(FPIdxProcess % 1000 === 0)
+          console.log(FPIdxProcess+' FingerPrints Loaded');
+        //loadedFPNum++;
+        BioserverData.totalFPAmount = FPIdxProcess;
+      });
+      var endTime = process.hrtime();
+      var resTime = parseFloat(((endTime[0] - beginTime[0])* 1e3 + (endTime[1] - beginTime[1])* 1e-6).toFixed(3));
+      console.log('All '+ BioserverData.totalFPAmount +' FingerPrints Have Been Loaded in '+ resTime + ' ms');
+      //console.log(BioserverData);
+    });
+  }
+  else{
+    console.log('Problems Occured while Initializing. Error Code: '+licenseNum);
+  }
+  updateStatistics();
+}
+
+function onClosing(){
+  dllBioServer.BioServer_DeInit_v1();
+}

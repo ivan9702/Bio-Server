@@ -1,0 +1,262 @@
+extends layout
+
+block pageCSS
+  link(href='/plugins/nvd3/build/nv.d3.css', rel='stylesheet')
+
+block content
+  ol.breadcrumb.pull-right.navbar-right
+    li
+      a(href= host) 首頁
+    li
+      a(href='javascript:;') 運行統計
+    li.active
+      a(href='javascript:;') #{title}
+    li.dropdown.navbar-user
+      a.dropdown-toggle(href='javascript:;', data-toggle='dropdown', aria-expanded='false')
+        span.hidden-xs 選擇其他月份
+        b.caret
+      ul.dropdown-menu.animated.fadeInLeft
+        for month in allMonths
+          li
+            a(href='/monthly-report/#{month}') #{month}
+  h1.page-header
+    | BioServer
+    small #{title}
+  .row
+    .col-md-12
+      .panel.panel-inverse
+        .panel-heading
+          .panel-heading-btn
+            a.btn.btn-xs.btn-icon.btn-circle.btn-default(href='javascript:;', data-click='panel-expand')
+              i.fa.fa-expand
+            a.btn.btn-xs.btn-icon.btn-circle.btn-success(href='javascript:;', data-click='panel-reload')
+              i.fa.fa-repeat
+          h4.panel-title 本月運行效能：指紋數
+        .panel-body
+          #nv-line-chart.height-sm
+    .col-md-12
+      .panel.panel-inverse
+        .panel-heading
+          .panel-heading-btn
+            a.btn.btn-xs.btn-icon.btn-circle.btn-default(href='javascript:;', data-click='panel-expand')
+              i.fa.fa-expand
+            a.btn.btn-xs.btn-icon.btn-circle.btn-success(href='javascript:;', data-click='panel-reload')
+              i.fa.fa-repeat
+          h4.panel-title 本月運行效能：最近反應時間
+        .panel-body
+          #nv-line-chart2.height-sm
+    .col-md-12
+      .panel.panel-inverse
+        .panel-heading
+          .panel-heading-btn
+            a.btn.btn-xs.btn-icon.btn-circle.btn-default(href='javascript:;', data-click='panel-expand')
+              i.fa.fa-expand
+            a.btn.btn-xs.btn-icon.btn-circle.btn-success(href='javascript:;', data-click='panel-reload')
+              i.fa.fa-repeat
+          h4.panel-title Request分類統計
+        .panel-body
+          #nv-bar-chart.height-sm
+    .col-md-12
+      .panel.panel-inverse
+        .panel-heading
+          .panel-heading-btn
+            a.btn.btn-xs.btn-icon.btn-circle.btn-default(href='javascript:;', data-click='panel-expand')
+              i.fa.fa-expand
+            a.btn.btn-xs.btn-icon.btn-circle.btn-success(href='javascript:;', data-click='panel-reload')
+              i.fa.fa-repeat
+            a.btn.btn-xs.btn-icon.btn-circle.btn-warning(href='javascript:;', data-click='panel-collapse')
+              i.fa.fa-minus
+            a.btn.btn-xs.btn-icon.btn-circle.btn-danger(href='javascript:;', data-click='panel-remove')
+              i.fa.fa-times
+          h4.panel-title 週呼叫次數統計
+        .panel-body
+          #nv-stacked-bar-chart.height-sm
+
+block pageJS
+  script(src='https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.2/d3.min.js')
+  script(src='/plugins/nvd3/build/nv.d3.js')
+  script(src='/js/apps.min.js')
+
+block onPageJS
+  script.
+    $(document).ready(function() {
+      App.init();
+      var blue    = '#348fe2',
+          blueLight = '#5da5e8',
+          blueDark  = '#1993E4',
+          aqua    = '#49b6d6',
+          aquaLight = '#6dc5de',
+          aquaDark  = '#3a92ab',
+          green   = '#00acac',
+          greenLight  = '#33bdbd',
+          greenDark = '#008a8a',
+          orange    = '#f59c1a',
+          orangeLight = '#f7b048',
+          orangeDark  = '#c47d15',
+          dark    = '#2d353c',
+          grey    = '#b6c2c9',
+          purple    = '#727cb6',
+          purpleLight = '#8e96c5',
+          purpleDark  = '#5b6392',
+          red         = '#ff5b57';
+
+
+      var handleLineChart = function() {
+          "use strict";
+
+          nv.addGraph(function() {
+
+              var sin = !{sin};
+              var lineChartData = [
+                  { values: sin, key: '指紋數', color: green }
+              ];
+
+              var lineChart = nv.models.lineChart()
+                  .options({
+                      transitionDuration: 300,
+                      useInteractiveGuideline: true
+                  });
+
+              lineChart.xAxis
+                  .axisLabel('呼叫次數（次）')
+                  .tickFormat(d3.format(',.0f'));
+
+              lineChart.yAxis
+                  .axisLabel('指紋數目（個）')
+                  .tickFormat(function(d) {
+                      if (d == null) {
+                          return 'N/A';
+                      }
+                      return d3.format(',.0f')(d);
+                  });
+
+              d3.select('#nv-line-chart').append('svg')
+                  .datum(lineChartData)
+                  .call(lineChart);
+
+              nv.utils.windowResize(lineChart.update);
+
+              return lineChart;
+          });
+      };
+      var handleLineChart2 = function() {
+          "use strict";
+
+          nv.addGraph(function() {
+
+              var cos = !{cos};
+
+              var lineChartData = [
+                  { values: cos, key: '反應時間', color: blue }
+              ];
+
+              var lineChart = nv.models.lineChart()
+                  .options({
+                      transitionDuration: 300,
+                      useInteractiveGuideline: true
+                  });
+
+              lineChart.xAxis
+                  .axisLabel('呼叫次數（次）')
+                  .tickFormat(d3.format(',.0f'));
+
+              lineChart.yAxis
+                  .axisLabel('反應時間（ms）')
+                  .tickFormat(function(d) {
+                      if (d == null) {
+                          return 'N/A';
+                      }
+                      return d3.format(',.3f')(d);
+                  });
+
+              d3.select('#nv-line-chart2').append('svg')
+                  .datum(lineChartData)
+                  .call(lineChart);
+
+              nv.utils.windowResize(lineChart.update);
+
+              return lineChart;
+          });
+      };
+      var handleBarChart = function() {
+          "use strict";
+
+          var barChartData = [{
+              key: 'Cumulative Return',
+              values: [
+                  { 'label' : 'AddFP', 'value' : #{monthAdd}, 'color' : red },
+                  { 'label' : 'DeleteFP', 'value' : #{monthDelete}, 'color' : orange },
+                  { 'label' : 'SearchFP', 'value' : #{monthSearch}, 'color' : green },
+                  { 'label' : 'VerifyFP', 'value' : #{monthVerify}, 'color' : aqua },
+                  { 'label' : 'IdentifyFP', 'value' : #{monthIdentify}, 'color' : blue }
+              ]
+          }];
+
+          nv.addGraph(function() {
+              var barChart = nv.models.discreteBarChart()
+                  .x(function(d) { return d.label })
+                  .y(function(d) { return d.value })
+                  .showValues(true)
+                  .duration(250);
+
+              barChart.yAxis.axisLabel("Total Queries");
+              barChart.xAxis.axisLabel('API');
+
+              d3.select('#nv-bar-chart').append('svg').datum(barChartData).call(barChart);
+              nv.utils.windowResize(barChart.update);
+
+              return barChart;
+          });
+      };
+      var handleStackedBarChart = function() {
+        "use strict";
+
+        var stackedBarChartData = [{
+            key: 'AddFP',
+            'color' : red,
+            values: [
+                { x:1, y: #{monthAddFP[0]}},{ x:2, y: #{monthAddFP[1]}},{ x:3, y: #{monthAddFP[2]}},{ x:4, y: #{monthAddFP[3]}},{ x:5, y: #{monthAddFP[4]}},{ x:6, y: #{monthAddFP[5]}},{ x:7, y: #{monthAddFP[6]}},{ x:8, y: #{monthAddFP[7]}},{ x:9, y: #{monthAddFP[8]}},{ x:10, y: #{monthAddFP[9]}},{ x:11, y: #{monthAddFP[10]}},{ x:12, y: #{monthAddFP[11]}},{ x:13, y: #{monthAddFP[12]}},{ x:14, y: #{monthAddFP[13]}},{ x:15, y: #{monthAddFP[14]}},{ x:16, y: #{monthAddFP[15]}},{ x:17, y: #{monthAddFP[16]}},{ x:18, y: #{monthAddFP[17]}},{ x:19, y: #{monthAddFP[18]}},{ x:20, y: #{monthAddFP[19]}},{ x:21, y: #{monthAddFP[20]}},{ x:22, y: #{monthAddFP[21]}},{ x:23, y: #{monthAddFP[22]}},{ x:24, y: #{monthAddFP[23]}},{ x:25, y: #{monthAddFP[24]}},{ x:26, y: #{monthAddFP[25]}},{ x:27, y: #{monthAddFP[26]}},{ x:28, y: #{monthAddFP[27]}},{ x:29, y: #{monthAddFP[28]}},{ x:30, y: #{monthAddFP[29]}},{ x:31, y: #{monthAddFP[30]}}
+            ]
+        },{
+            key: 'DeleteFP',
+            'color' : orange,
+            values: [
+                { x:1, y: #{monthDeleteFP[0]}},{ x:2, y: #{monthDeleteFP[1]}},{ x:3, y: #{monthDeleteFP[2]}},{ x:4, y: #{monthDeleteFP[3]}},{ x:5, y: #{monthDeleteFP[4]}},{ x:6, y: #{monthDeleteFP[5]}},{ x:7, y: #{monthDeleteFP[6]}},{ x:8, y: #{monthDeleteFP[7]}},{ x:9, y: #{monthDeleteFP[8]}},{ x:10, y: #{monthDeleteFP[9]}},{ x:11, y: #{monthDeleteFP[10]}},{ x:12, y: #{monthDeleteFP[11]}},{ x:13, y: #{monthDeleteFP[12]}},{ x:14, y: #{monthDeleteFP[13]}},{ x:15, y: #{monthDeleteFP[14]}},{ x:16, y: #{monthDeleteFP[15]}},{ x:17, y: #{monthDeleteFP[16]}},{ x:18, y: #{monthDeleteFP[17]}},{ x:19, y: #{monthDeleteFP[18]}},{ x:20, y: #{monthDeleteFP[19]}},{ x:21, y: #{monthDeleteFP[20]}},{ x:22, y: #{monthDeleteFP[21]}},{ x:23, y: #{monthDeleteFP[22]}},{ x:24, y: #{monthDeleteFP[23]}},{ x:25, y: #{monthDeleteFP[24]}},{ x:26, y: #{monthDeleteFP[25]}},{ x:27, y: #{monthDeleteFP[26]}},{ x:28, y: #{monthDeleteFP[27]}},{ x:29, y: #{monthDeleteFP[28]}},{ x:30, y: #{monthDeleteFP[29]}},{ x:31, y: #{monthDeleteFP[30]}}
+            ]
+        },{
+            key: 'SearchFP',
+            'color' : green,
+            values: [
+                { x:1, y: #{monthSearchFP[0]}},{ x:2, y: #{monthSearchFP[1]}},{ x:3, y: #{monthSearchFP[2]}},{ x:4, y: #{monthSearchFP[3]}},{ x:5, y: #{monthSearchFP[4]}},{ x:6, y: #{monthSearchFP[5]}},{ x:7, y: #{monthSearchFP[6]}},{ x:8, y: #{monthSearchFP[7]}},{ x:9, y: #{monthSearchFP[8]}},{ x:10, y: #{monthSearchFP[9]}},{ x:11, y: #{monthSearchFP[10]}},{ x:12, y: #{monthSearchFP[11]}},{ x:13, y: #{monthSearchFP[12]}},{ x:14, y: #{monthSearchFP[13]}},{ x:15, y: #{monthSearchFP[14]}},{ x:16, y: #{monthSearchFP[15]}},{ x:17, y: #{monthSearchFP[16]}},{ x:18, y: #{monthSearchFP[17]}},{ x:19, y: #{monthSearchFP[18]}},{ x:20, y: #{monthSearchFP[19]}},{ x:21, y: #{monthSearchFP[20]}},{ x:22, y: #{monthSearchFP[21]}},{ x:23, y: #{monthSearchFP[22]}},{ x:24, y: #{monthSearchFP[23]}},{ x:25, y: #{monthSearchFP[24]}},{ x:26, y: #{monthSearchFP[25]}},{ x:27, y: #{monthSearchFP[26]}},{ x:28, y: #{monthSearchFP[27]}},{ x:29, y: #{monthSearchFP[28]}},{ x:30, y: #{monthSearchFP[29]}},{ x:31, y: #{monthSearchFP[30]}}
+            ]
+        },{
+            key: 'VerifyFP',
+            'color' : aqua,
+            values: [
+                { x:1, y: #{monthVerifyFP[0]}},{ x:2, y: #{monthVerifyFP[1]}},{ x:3, y: #{monthVerifyFP[2]}},{ x:4, y: #{monthVerifyFP[3]}},{ x:5, y: #{monthVerifyFP[4]}},{ x:6, y: #{monthVerifyFP[5]}},{ x:7, y: #{monthVerifyFP[6]}},{ x:8, y: #{monthVerifyFP[7]}},{ x:9, y: #{monthVerifyFP[8]}},{ x:10, y: #{monthVerifyFP[9]}},{ x:11, y: #{monthVerifyFP[10]}},{ x:12, y: #{monthVerifyFP[11]}},{ x:13, y: #{monthVerifyFP[12]}},{ x:14, y: #{monthVerifyFP[13]}},{ x:15, y: #{monthVerifyFP[14]}},{ x:16, y: #{monthVerifyFP[15]}},{ x:17, y: #{monthVerifyFP[16]}},{ x:18, y: #{monthVerifyFP[17]}},{ x:19, y: #{monthVerifyFP[18]}},{ x:20, y: #{monthVerifyFP[19]}},{ x:21, y: #{monthVerifyFP[20]}},{ x:22, y: #{monthVerifyFP[21]}},{ x:23, y: #{monthVerifyFP[22]}},{ x:24, y: #{monthVerifyFP[23]}},{ x:25, y: #{monthVerifyFP[24]}},{ x:26, y: #{monthVerifyFP[25]}},{ x:27, y: #{monthVerifyFP[26]}},{ x:28, y: #{monthVerifyFP[27]}},{ x:29, y: #{monthVerifyFP[28]}},{ x:30, y: #{monthVerifyFP[29]}},{ x:31, y: #{monthVerifyFP[30]}}
+            ]
+        },{
+            key: 'IdenfityFP',
+            'color' : dark,
+            values: [
+                { x:1, y: #{monthIdentifyFP[0]}},{ x:2, y: #{monthIdentifyFP[1]}},{ x:3, y: #{monthIdentifyFP[2]}},{ x:4, y: #{monthIdentifyFP[3]}},{ x:5, y: #{monthIdentifyFP[4]}},{ x:6, y: #{monthIdentifyFP[5]}},{ x:7, y: #{monthIdentifyFP[6]}},{ x:8, y: #{monthIdentifyFP[7]}},{ x:9, y: #{monthIdentifyFP[8]}},{ x:10, y: #{monthIdentifyFP[9]}},{ x:11, y: #{monthIdentifyFP[10]}},{ x:12, y: #{monthIdentifyFP[11]}},{ x:13, y: #{monthIdentifyFP[12]}},{ x:14, y: #{monthIdentifyFP[13]}},{ x:15, y: #{monthIdentifyFP[14]}},{ x:16, y: #{monthIdentifyFP[15]}},{ x:17, y: #{monthIdentifyFP[16]}},{ x:18, y: #{monthIdentifyFP[17]}},{ x:19, y: #{monthIdentifyFP[18]}},{ x:20, y: #{monthIdentifyFP[19]}},{ x:21, y: #{monthIdentifyFP[20]}},{ x:22, y: #{monthIdentifyFP[21]}},{ x:23, y: #{monthIdentifyFP[22]}},{ x:24, y: #{monthIdentifyFP[23]}},{ x:25, y: #{monthIdentifyFP[24]}},{ x:26, y: #{monthIdentifyFP[25]}},{ x:27, y: #{monthIdentifyFP[26]}},{ x:28, y: #{monthIdentifyFP[27]}},{ x:29, y: #{monthIdentifyFP[28]}},{ x:30, y: #{monthIdentifyFP[29]}},{ x:31, y: #{monthIdentifyFP[30]}}
+            ]
+        }];
+
+        nv.addGraph({
+            generate: function() {
+                var stackedBarChart = nv.models.multiBarChart()
+                    .stacked(true)
+                    .showControls(false);
+
+                var svg = d3.select('#nv-stacked-bar-chart').append('svg').datum(stackedBarChartData);
+                svg.transition().duration(0).call(stackedBarChart);
+                return stackedBarChart;
+            }
+        });
+    };
+    handleLineChart();
+    handleLineChart2();
+    handleBarChart();
+    handleStackedBarChart();
+    });

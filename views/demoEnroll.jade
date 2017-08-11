@@ -1,0 +1,80 @@
+extends layout
+
+block pageCSS
+  link(href='/plugins/bootstrap-wizard/css/bwizard.min.css', rel='stylesheet')
+
+block content
+  ol.breadcrumb.pull-right
+    li
+      a(href= host) 首頁
+    li
+      a(href='javascript:;') 用戶端操作展示
+    li.active
+      a(href='javascript:;') 指紋建檔 (Add Minutiae)
+  h1.page-header
+    | BioServer
+    small 用戶端操作展示
+  .row
+    .col-md-12
+      .panel.panel-inverse
+        .panel-heading
+          h4.panel-title 指紋建檔 (Add Minutiae)
+        .panel-body
+          form
+            #wizard
+              ol
+                li
+                  | 接上 FM220 指紋機及開啟程式
+                  small 確定驅動程式安裝成功後，開啟截取特徵程式，按三次手指取得特徵碼。
+                li
+                  | 讀取特徵碼
+                  small 確認完成截取後，複製特微碼。
+                li
+                  | 使用建指紋檔
+                  small 使用左方功能測試，選取建指紋檔。
+                li
+                  | 輸入資訊
+                  small 輸入您的userId(即使用者ID)、fpIndex(即手指代碼)、minuite(即複製後的特徵碼)
+                li
+                  | 核對和送出
+                  small 核對完成您輸入的資訊，按下Submit進行刪除。
+                li
+                  | 完成和回傳
+                  small 送出後右方會回傳您送出的資訊及狀態
+              div
+                fieldset
+                  legend.pull-left.width-full 取得特徵
+                  img.img-responsive(src='/enroll-1.png', alt='delete')
+              div
+                fieldset
+                  legend.pull-left.width-full 複製特徵
+                  img.img-responsive(src='/enroll-2.png', alt='delete')
+              div
+                fieldset
+                  legend.pull-left.width-full 指紋建檔
+                  img.img-responsive(src='/enroll-3.png', alt='delete')
+              div
+                fieldset
+                  legend.pull-left.width-full 輸入/貼上 資訊
+                  img.img-responsive(src='/enroll-4.png', alt='delete')
+              div
+                fieldset
+                  legend.pull-left.width-full 核對和送出
+                  img.img-responsive(src='/enroll-4.png', alt='delete')
+              div
+                fieldset
+                  legend.pull-left.width-full 完成和回傳
+                  img.img-responsive(src='/enroll-5.png', alt='delete')
+
+
+block pageJS
+  script(src='/plugins/bootstrap-wizard/js/bwizard.js')
+  script(src='/js/form-wizards.demo.min.js')
+  script(src='/js/apps.min.js')
+
+block onPageJS
+  script.
+    $(document).ready(function() {
+      App.init();
+      FormWizard.init();
+    });

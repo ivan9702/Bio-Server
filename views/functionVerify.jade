@@ -1,0 +1,105 @@
+extends layout
+
+block pageCSS
+  link(href='/plugins/bootstrap-wizard/css/bwizard.min.css', rel='stylesheet')
+
+block content
+  ol.breadcrumb.pull-right
+    li
+      a(href= host) 首頁
+    li
+      a(href='javascript:;') 功能測試
+    li.active
+      a(href='javascript:;') 指紋驗證 (Verify User)
+  h1.page-header
+    | BioServer
+    small 指紋驗證 (Verify User)
+  div(class='row', ng-app='listApp', ng-controller='listController')
+    .col-md-6
+      .panel.panel-inverse(data-sortable-id='form-validation-1')
+        .panel-heading
+          .panel-heading-btn
+            a.btn.btn-xs.btn-icon.btn-circle.btn-default(href='javascript:;', data-click='panel-expand')
+              i.fa.fa-expand
+            a.btn.btn-xs.btn-icon.btn-circle.btn-success(href='javascript:;', data-click='panel-reload')
+              i.fa.fa-repeat
+            a.btn.btn-xs.btn-icon.btn-circle.btn-warning(href='javascript:;', data-click='panel-collapse')
+              i.fa.fa-minus
+            a.btn.btn-xs.btn-icon.btn-circle.btn-danger(href='javascript:;', data-click='panel-remove')
+              i.fa.fa-times
+          h4.panel-title 送出資料
+        .panel-body.panel-form
+          form.form-horizontal.form-bordered(data-parsley-validate='true', name='demo-form', ng-submit="formSubmitAPI()")
+            .form-group
+              label.control-label.col-md-4.col-sm-4(for='userid') userId * :
+              .col-md-6.col-sm-6
+                input#userid.form-control(type='text', name='userId', placeholder='Six number', data-parsley-required='true', ng-model="formData.userId")
+            .form-group
+              label.control-label.col-md-4.col-sm-4(for='minutiae') minutiae * :
+              .col-md-6.col-sm-6
+                input#minutiae.form-control(type='text', name='minutiae', placeholder='512byte string', data-parsley-required='true', ng-model="formData.minutiae")
+            .form-group
+              label.control-label.col-md-4.col-sm-4
+              .col-md-6.col-sm-6
+                button.btn.btn-primary(type='submit') Submit
+    .col-md-6
+      .panel.panel-inverse(data-sortable-id='form-validation-2')
+        .panel-heading
+          .panel-heading-btn
+            a.btn.btn-xs.btn-icon.btn-circle.btn-default(href='javascript:;', data-click='panel-expand')
+              i.fa.fa-expand
+            a.btn.btn-xs.btn-icon.btn-circle.btn-success(href='javascript:;', data-click='panel-reload')
+              i.fa.fa-repeat
+            a.btn.btn-xs.btn-icon.btn-circle.btn-warning(href='javascript:;', data-click='panel-collapse')
+              i.fa.fa-minus
+            a.btn.btn-xs.btn-icon.btn-circle.btn-danger(href='javascript:;', data-click='panel-remove')
+              i.fa.fa-times
+          h4.panel-title 接收回傳
+        .panel-body.panel-form
+          form.form-horizontal.form-bordered(data-parsley-validate='true')
+            .form-group
+              label.control-label.col-md-4.col-sm-4 Response :
+              .col-md-6.col-sm-6
+                label.control-label.col-md-0.col-sm-0(ng-bind="code") Success
+            .form-group
+              label.control-label.col-md-4.col-sm-4 Message :
+              .col-md-6.col-sm-6
+                label.control-label.col-md-0.col-sm-0(ng-bind="message") Response message
+            .form-group
+              label.control-label.col-md-4.col-sm-4 Data :
+              .col-md-6.col-sm-6
+                label.control-label.col-md-0.col-sm-0(ng-bind="responseData")
+                  | ID : xxxx fpIndex : 1 score : xxxxx
+
+
+
+
+
+block pageJS
+  script(src='//ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js')
+  script(src='/plugins/parsley/dist/parsley.js')
+  script(src='/js/apps.min.js')
+
+block onPageJS
+  script.
+    $(document).ready(function() {
+      App.init();
+    });
+    var listApp = angular.module('listApp', []);
+    listApp.controller('listController', function($scope, $http) {
+      $scope.code = "Success";
+      $scope.message = "Response Message";
+      $scope.responseData = "ID : xxxx fpIndex : 1 score : xxxxx";
+      $scope.formSubmitAPI = function(){
+        $http.post('/api/verifyFP', $scope.formData)
+        .success(function (data, status, headers, config) {
+          $scope.code = data.code;
+          $scope.message = data.message;
+          $scope.responseData = data.data ? JSON.stringify(data.data) : "NO DATA";
+          $scope.formData = {};
+        })
+        .error(function (data, status, header, config) {
+          console.log(data);
+        });
+      };
+    });

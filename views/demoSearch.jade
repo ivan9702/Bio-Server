@@ -1,0 +1,73 @@
+extends layout
+
+block pageCSS
+  link(href='/plugins/bootstrap-wizard/css/bwizard.min.css', rel='stylesheet')
+
+block content
+  ol.breadcrumb.pull-right
+    li
+      a(href= host) 首頁
+    li
+      a(href='javascript:;') 用戶端操作展示
+    li.active
+      a(href='javascript:;') 搜尋使用者 (Search User)
+  h1.page-header
+    | BioServer
+    small 用戶端操作展示
+  .row
+    .col-md-12
+      .panel.panel-inverse
+        .panel-heading
+          h4.panel-title 搜尋使用者 (Search User)
+        .panel-body
+          form
+            #wizard
+              ol
+                li
+                  | 使用搜尋使用者
+                  small 使用左方功能測試，選取搜尋使用者。
+                li
+                  | 輸入資訊
+                  small 輸入您的minutiae(即特徵碼)
+                li
+                  | 核對和送出
+                  small 核對完成您輸入的資訊，按下Submit進行搜尋。
+                li
+                  | 完成和回傳
+                  small 送出後右方會回傳您送出的資訊及狀態
+              div
+                fieldset
+                  legend.pull-left.width-full 使用搜尋使用者
+                  .row
+                    img.img-responsive(src='/search-1.png', alt='delete')
+              div
+                fieldset
+                  legend.pull-left.width-full 輸入資訊
+                  .row
+                    img.img-responsive(src='/search-2.png', alt='delete')
+              div
+                fieldset
+                  legend.pull-left.width-full 核對和送出
+                  .row
+                    img.img-responsive(src='/search-2.png', alt='delete')
+              div
+                fieldset
+                  legend.pull-left.width-full 完成和回傳
+                  .row
+                    img.img-responsive(src='/search-3.png', alt='delete')
+
+
+
+
+
+block pageJS
+  script(src='/plugins/bootstrap-wizard/js/bwizard.js')
+  script(src='/js/form-wizards.demo.min.js')
+  script(src='/js/apps.min.js')
+
+block onPageJS
+  script.
+    $(document).ready(function() {
+      App.init();
+      FormWizard.init();
+    });

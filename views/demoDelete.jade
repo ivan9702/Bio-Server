@@ -1,0 +1,71 @@
+extends layout
+
+block pageCSS
+  link(href='/plugins/bootstrap-wizard/css/bwizard.min.css', rel='stylesheet')
+
+block content
+  ol.breadcrumb.pull-right
+    li
+      a(href= host) 首頁
+    li
+      a(href='javascript:;') 用戶端操作展示
+    li.active
+      a(href='javascript:;') 刪除使用者 (Delete User)
+  h1.page-header
+    | BioServer
+    small 用戶端操作展示
+  .row
+    .col-md-12
+      .panel.panel-inverse
+        .panel-heading
+          h4.panel-title 刪除使用者 (Delete User)
+        .panel-body
+          form
+            #wizard
+              ol
+                li
+                  | 使用刪除功能
+                  small 使用左方功能測試，選取刪除使用者。
+                li
+                  | 輸入資訊
+                  small 輸入您的userId(即使用者ID)、fpIndex(即手指代碼)
+                li
+                  | 核對和送出
+                  small 核對完成您輸入的資訊，按下Submit進行刪除。
+                li
+                  | 完成和回傳
+                  small 送出後右方會回傳您送出的資訊及狀態
+              div
+                fieldset
+                  legend.pull-left.width-full 使用刪除功能
+                  .row
+                    img.img-responsive(src='/delete-1.png', alt='delete')
+              div
+                fieldset
+                  legend.pull-left.width-full 輸入資訊
+                  .row
+                    img.img-responsive(src='/delete-2.png', alt='delete')
+              div
+                fieldset
+                  legend.pull-left.width-full 核對和送出
+                  .row
+                    img.img-responsive(src='/delete-2.png', alt='delete')
+              div
+                legend.pull-left.width-full 完成和回傳
+                .row
+                  img.img-responsive(src='/delete-3.png', alt='delete')
+
+
+
+
+block pageJS
+  script(src='/plugins/bootstrap-wizard/js/bwizard.js')
+  script(src='/js/form-wizards.demo.min.js')
+  script(src='/js/apps.min.js')
+
+block onPageJS
+  script.
+    $(document).ready(function() {
+      App.init();
+      FormWizard.init();
+    });

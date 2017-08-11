@@ -1,0 +1,84 @@
+extends layout
+
+block pageCSS
+  link(href='/plugins/bootstrap-wizard/css/bwizard.min.css', rel='stylesheet')
+
+block content
+  ol.breadcrumb.pull-right
+    li
+      a(href= host) 首頁
+    li
+      a(href='javascript:;') 異常分析
+  h1.page-header
+    | BioServer
+    small 異常分析
+  .p-20
+    div(class='row', ng-app='listApp', ng-controller='listController')
+      .col-md-12
+        .email-content
+          table(class="table table-email", infinite-scroll='github.nextPage()', infinite-scroll-disabled='github.busy', infinite-scroll-distance='1',style="table-layout: fixed; width: 100%")
+            thead
+              tr
+                th
+                  | 接收
+                  br
+                  | Request
+                th Use Function
+                th
+                  | 指紋數
+                  br
+                  | 記憶體
+                th 傳入參數
+                th 回傳 Code
+                th 時間
+            tbody
+              tr(ng-repeat='(key, item) in github.items', infinite-scroll-distance='2')
+                td(ng-bind="item.request")
+                td(ng-bind="item.function")
+                td(ng-bind="item.FPNum")
+                td(ng-bind="item.reqBody", style="word-wrap: break-word")
+                td(ng-bind="item.resCode")
+                td(ng-bind="item.eventTime")
+
+          .email-footer.clearfix
+            | 往下捲時自動載入
+
+block pageJS
+  script(src='//ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js')
+  script(src='/js/ng-infinite-scroll.min.js')
+  script(src='/js/inbox.demo.min.js')
+  script(src='/js/apps.min.js')
+
+block onPageJS
+  script.
+    $(document).ready(function() {
+      App.init();
+      Inbox.init();
+    });
+    var listApp = angular.module('listApp', ['infinite-scroll']);
+    listApp.controller('listController', function($scope, Github) {
+      $scope.github = new Github();
+    });
+    listApp.factory('Github', function($http, $sce) {
+      var Github = function() {
+        this.items = [];
+        this.busy = false;
+        this.after = 1;
+      };
+
+      Github.prototype.nextPage = function() {
+        if (this.busy) return;
+        this.busy = true;
+        var url = "/api/getErr/" + this.after;
+        $sce.trustAsResourceUrl(url);
+        $http.get(url).success(function(data) {
+          for (var i = 0; i < data.length; i++) {
+            this.items.push(data[i]);
+          }
+          this.after++;
+          this.busy = false;
+        }.bind(this));
+      };
+
+      return Github;
+    });
