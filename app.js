@@ -19,6 +19,7 @@ var cors = require('cors');
 
 var app = express();
 
+//ivan test 
 //app.locals.host = "http://localhost:3000";
 
 // view engine setup
